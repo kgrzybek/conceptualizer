@@ -104,11 +104,13 @@ public class Model
 
     public void AddRelationship(
         ConceptRelationship first,
-        ConceptRelationship second)
+        ConceptRelationship second,
+        string? relationshipCode = null)
     {
         _relationships.Add(new BiDirectionalConceptRelationship(
             first,
-            second));
+            second,
+            relationshipCode));
     }
 
     public static Model GetInstance()

@@ -25,7 +25,7 @@ public static class PlantUmlGenerator
             GenerateConcepts(sb, model, indentSize, view);
 
             GenerateRelationships(sb, model, view);
-        
+
             sb.AppendLine();
             sb.AppendLine("@enduml");
             sb.AppendLine();
@@ -34,12 +34,12 @@ public static class PlantUmlGenerator
             
             var path = Path.Combine(absoluteModelsPath, view.Path);
             var directoryPath = Path.GetDirectoryName(path)!;
-
+            
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
-            
+
             File.WriteAllText(path, content);
         }
     }
@@ -49,11 +49,11 @@ public static class PlantUmlGenerator
         foreach (var biDirectionalConceptRelationship in model.GetRelationships())
         {
             if (view.Concepts.All(x => x.Concept != biDirectionalConceptRelationship.First.From) ||
-                view.Concepts.All(x => x.Concept != biDirectionalConceptRelationship.First.To)) 
+                view.Concepts.All(x => x.Concept != biDirectionalConceptRelationship.First.To))
             {
                 continue;
             }
-            
+
             string relationshipType;
 
             if (biDirectionalConceptRelationship.First.Type is GeneralizationRelationshipType)
@@ -70,10 +70,27 @@ public static class PlantUmlGenerator
             {
                 relationshipLabel = $"{relationshipLabel} / {biDirectionalConceptRelationship.Second.Name}";
             }
-            
+
             sb.AppendLine(
                 $"\"{biDirectionalConceptRelationship.First.From.Name}\" \"{biDirectionalConceptRelationship.Second.Multiplicity}" +
                 $"\" {relationshipType} \"{biDirectionalConceptRelationship.First.Multiplicity}\" \"{biDirectionalConceptRelationship.First.To.Name}\" : \"{relationshipLabel}\" ");
+
+            var relationshipNote = view.RelationshipNotes.SingleOrDefault(x =>
+                x.RelationshipCode == biDirectionalConceptRelationship.RelationshipCode);
+            if (relationshipNote != null)
+            {
+                var locationText = relationshipNote.Location switch
+                {
+                    RelationshipNoteLocation.NotSpecified => string.Empty,
+                    RelationshipNoteLocation.Left => "left",
+                    RelationshipNoteLocation.Right => "right",
+                    _ => string.Empty
+                };
+
+                sb.AppendLine($"note {locationText} on link");
+                sb.AppendLine(relationshipNote.Content);
+                sb.AppendLine("end note");
+            }
         }
     }
 
@@ -88,7 +105,7 @@ public static class PlantUmlGenerator
         {
             indent += " ";
         }
-        
+
         foreach (var concept in model.GetConcepts().OrderBy(x => x.Name))
         {
             var viewConcept = view.Concepts.SingleOrDefault(x => x.Concept == concept);
@@ -102,7 +119,7 @@ public static class PlantUmlGenerator
                 GenerateConcept(sb, entityConcept, viewConcept, indent);
                 sb.AppendLine();
             }
-            
+
             if (concept is EnumConcept enumConcept)
             {
                 GenerateEnumConcept(sb, enumConcept, viewConcept, indent);
@@ -118,7 +135,7 @@ public static class PlantUmlGenerator
         string indent)
     {
         sb.AppendLine($"entity \"{concept.Name}\"" + " {");
-            
+
         if (viewConcept.ShowAttributes)
         {
             foreach (var attribute in concept.Attributes.OrderBy(x => x.Name))
@@ -130,7 +147,7 @@ public static class PlantUmlGenerator
 
         sb.AppendLine("}");
     }
-    
+
     private static void GenerateEnumConcept(
         StringBuilder sb,
         EnumConcept concept,
@@ -138,7 +155,7 @@ public static class PlantUmlGenerator
         string indent)
     {
         sb.AppendLine($"enum \"{concept.Name}\"" + " {");
-            
+
         if (viewConcept.ShowAttributes)
         {
             foreach (var value in concept.Values.OrderBy(x => x))
