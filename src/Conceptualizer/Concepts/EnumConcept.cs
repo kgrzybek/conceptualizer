@@ -20,7 +20,7 @@ public class EnumConcept : Concept
         return this;
     }
 
-    protected EnumConcept WithValues(params string[] values)
+    public EnumConcept WithValues(params string[] values)
     {
         Values = values.ToList();
 

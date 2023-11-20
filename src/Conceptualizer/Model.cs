@@ -13,18 +13,39 @@ public class Model
 
     public void Initialize(Assembly modelAssembly)
     {
-        InitializeConcepts(modelAssembly);
+        _concepts = new List<Concept>();
+        _relationships = new List<BiDirectionalConceptRelationship>();
+        InitializeEnums(modelAssembly);
+        InitializeEntities(modelAssembly);
         InitializeModels(modelAssembly);
     }
 
-    private void InitializeConcepts(Assembly modelAssembly)
+    private void InitializeEnums(Assembly modelAssembly)
     {
-        _concepts = new List<Concept>();
         var types = modelAssembly
             .GetTypes()
             .Where(t =>
-                typeof(EntityConcept).IsAssignableFrom(t) ||
                 typeof(EnumConcept).IsAssignableFrom(t))
+            .ToList();
+
+        foreach (var type in types)
+        {
+            var staticMethod = type.GetMethod("Create", BindingFlags.Static | BindingFlags.Public);
+
+            if (staticMethod != null)
+            {
+                var concept = staticMethod.Invoke(null, null);
+                _concepts.Add((Concept) concept!);
+            }
+        }
+    }
+
+    private void InitializeEntities(Assembly modelAssembly)
+    {
+        var types = modelAssembly
+            .GetTypes()
+            .Where(t =>
+                typeof(EntityConcept).IsAssignableFrom(t))
             .ToList();
 
         foreach (var type in types)
@@ -41,8 +62,6 @@ public class Model
 
     private void InitializeModels(Assembly modelAssembly)
     {
-        _relationships = new List<BiDirectionalConceptRelationship>();
-        
         var types = modelAssembly
             .GetTypes()
             .Where(t =>

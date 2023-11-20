@@ -33,6 +33,12 @@ public static class PlantUmlGenerator
             var content = sb.ToString();
             
             var path = Path.Combine(absoluteModelsPath, view.Path);
+            var directoryPath = Path.GetDirectoryName(path)!;
+
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
             
             File.WriteAllText(path, content);
         }
